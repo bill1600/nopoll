@@ -55,6 +55,11 @@
 static pthread_once_t mutex_once = PTHREAD_ONCE_INIT;
 static pthread_mutex_t send_mutex;
 
+#define DEBUG_READ_ERR_CLOSE 1
+
+#ifdef DEBUG_READ_ERR_CLOSE
+static unsigned read_count = 0;
+#endif
 
 /** 
  * @brief Allows to enable/disable non-blocking/blocking behavior on
@@ -334,11 +339,11 @@ NOPOLL_SOCKET __nopoll_conn_sock_connect_opts_internal (noPollCtx       * ctx,
 	/* do a tcp connect */
         if (connect (session, res->ai_addr, res->ai_addrlen) < 0) {
 		if(errno != NOPOLL_EINPROGRESS && errno != NOPOLL_EWOULDBLOCK && errno != NOPOLL_ENOTCONN) {
-			nopoll_log (ctx, NOPOLL_LEVEL_CRITICAL, "unable to connect to remote host %s:%s errno=%d",
-				    host, port, errno);
-
 		        shutdown (session, SHUT_RDWR);
                         nopoll_close_socket (session);
+
+			nopoll_log (ctx, NOPOLL_LEVEL_CRITICAL, "unable to connect to remote host %s:%s errno=%d",
+				    host, port, errno);
 
 			/* relase address info */
 			freeaddrinfo (res);
@@ -3414,6 +3419,15 @@ noPollMsg   * nopoll_conn_get_msg (noPollConn * conn)
 			    bytes, conn->id);
 		return NULL;
 	} /* end if */
+
+#ifdef DEBUG_READ_ERR_CLOSE
+	read_count++;
+	if ((read_count & 7) == 0) {
+		nopoll_log (conn->ctx, NOPOLL_LEVEL_CRITICAL, "Debug connection close, finishing connection session");
+		nopoll_conn_shutdown (conn);
+		return NULL;
+	}
+#endif
 
 	/* record header size */
 	header_size = 2;
