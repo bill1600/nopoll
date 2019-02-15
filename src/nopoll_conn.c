@@ -55,9 +55,10 @@
 static pthread_once_t mutex_once = PTHREAD_ONCE_INIT;
 static pthread_mutex_t send_mutex;
 
-#define DEBUG_READ_ERR_CLOSE 1
+/*#define DEBUG_READ_ERR_CLOSE 1*/
+#define DEBUG_PING_MISS 1
 
-#ifdef DEBUG_READ_ERR_CLOSE
+#if defined(DEBUG_READ_ERR_CLOSE) || defined(DEBUG_PING_MISS) 
 static unsigned read_count = 0;
 #endif
 
@@ -3737,6 +3738,13 @@ read_payload:
 	if (msg->payload_size != 0 && msg->op_code == NOPOLL_PING_FRAME) {
 		nopoll_log (conn->ctx, NOPOLL_LEVEL_DEBUG, "PING received over connection id=%d and payload_size=%d, replying PONG",
 			    conn->id, msg->payload_size);
+#ifdef DEBUG_PING_MISS
+		read_count++;
+		if (read_count >= 8) {
+		  nopoll_msg_unref (msg);
+		  return NULL;
+		}
+#endif
 		/* Set the ping handler */
 		conn->on_ping_msg (conn->ctx, conn, msg, conn->on_ping_msg_data);
 		nopoll_conn_send_pong (conn, nopoll_msg_get_payload_size (msg), (noPollPtr)nopoll_msg_get_payload (msg));
