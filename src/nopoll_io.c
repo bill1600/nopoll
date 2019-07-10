@@ -66,7 +66,7 @@ noPollPtr nopoll_io_wait_select_create (noPollCtx * ctx)
  * 
  * @param fd_group The fd group to be deallocated.
  */
-void    nopoll_io_wait_select_destroy (noPollCtx * ctx, noPollPtr fd_group)
+void    nopoll_io_wait_select_destroy (noPollCtx * ctx, noPollPtr __fd_group)
 {
 	noPollSelect * select = (noPollSelect *) __fd_group;
 
