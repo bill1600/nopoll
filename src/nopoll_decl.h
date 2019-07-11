@@ -216,8 +216,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-/* #include <sys/select.h> */
-#define NOPOLL_HAVE_POLL 1
+#include <sys/select.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <time.h>
